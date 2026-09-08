@@ -1,0 +1,33 @@
+FROM ros:humble-ros-base-jammy
+
+ARG USERNAME=dev
+ARG UID=1000
+ARG GID=1000
+
+SHELL ["/bin/bash", "-c"]
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    iputils-ping \
+    nano \
+    net-tools \
+    python3-colcon-common-extensions \
+    python3-pip \
+    python3-rosdep \
+    ros-humble-demo-nodes-cpp \
+    ros-humble-demo-nodes-py \
+    ros-humble-rqt-graph \
+    ros-humble-rviz2 \
+    && rm -rf /var/lib/apt/lists/*
+RUN groupadd -g ${GID} ${USERNAME} 2>/dev/null || true \
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USERNAME} \
+    && echo "source /opt/ros/humble/setup.bash" >> /home/${USERNAME}/.bashrc \
+    && echo "[ -f /ws/install/setup.bash ] && source /ws/install/setup.bash" >> /home/${USERNAME}/.bashrc
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+WORKDIR /ws
+RUN chown ${UID}:${GID} /ws
+
+USER ${USERNAME}
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
